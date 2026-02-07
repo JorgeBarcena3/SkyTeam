@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkyTeam - Cooperative Landing Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <header class="game-header">
+      <h1>🛬 SkyTeam</h1>
+      <p class="subtitle">Desafío de Aterrizaje Cooperativo</p>
+      <button id="tutorial-btn" class="btn-tutorial-header">📖 Tutorial</button>
+    </header>
+
+    <div class="game-container">
+      <!-- Game Status -->
+      <div class="game-status">
+        <div class="status-item">
+          <span class="label">Ronda:</span>
+          <span id="round-number" class="value">1</span>
+        </div>
+        <div class="status-item">
+          <span class="label">Turno Actual:</span>
+          <span id="current-player" class="value">Piloto</span>
+        </div>
+        <div class="status-item approach-display">
+          <span class="label">Distancia al Aeropuerto:</span>
+          <span id="approach-distance" class="value">7</span>
+        </div>
+      </div>
+
+      <!-- Speed Table -->
+      <div class="speed-table">
+        <h3>📊 Tabla de Velocidad (Descenso Máximo: 2)</h3>
+        <div class="speed-grid">
+          <div class="speed-zone">
+            <div class="zone-header">Zona 0 - Sin Descenso</div>
+            <div class="zone-values">
+              <span class="value-badge">1</span>
+              <span class="value-badge">2</span>
+              <span class="value-badge">3</span>
+            </div>
+            <div class="zone-descent">Descenso: <strong>0</strong></div>
+          </div>
+          
+          <div class="zone-separator"></div>
+          
+          <div class="speed-zone">
+            <div class="zone-header">Zona 1 - Descenso Lento</div>
+            <div class="zone-values">
+              <span class="value-badge">4</span>
+              <span class="value-badge">5</span>
+              <span class="value-badge">6</span>
+            </div>
+            <div class="zone-descent">Descenso: <strong>1</strong></div>
+          </div>
+          
+          <div class="zone-separator"></div>
+          
+          <div class="speed-zone">
+            <div class="zone-header">Zona 2 - Descenso Óptimo</div>
+            <div class="zone-values">
+              <span class="value-badge">7</span>
+              <span class="value-badge">8</span>
+              <span class="value-badge">9</span>
+            </div>
+            <div class="zone-descent">Descenso: <strong>2</strong></div>
+          </div>
+          
+          <div class="zone-separator"></div>
+          
+          <div class="speed-zone">
+            <div class="zone-header">Zona 2 - Máximo</div>
+            <div class="zone-values">
+              <span class="value-badge">10</span>
+              <span class="value-badge">11</span>
+              <span class="value-badge">12</span>
+            </div>
+            <div class="zone-descent">Descenso: <strong>2</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Game Board -->
+      <div class="cockpit-board">
+        <!-- Plane Orientation Indicator -->
+        <div class="plane-orientation">
+          <div class="orientation-label">Plane Orientation</div>
+          <div class="orientation-display">
+            <div class="orientation-marker left">L3</div>
+            <div class="orientation-marker left">L2</div>
+            <div class="orientation-marker left">L1</div>
+            <div id="plane-indicator" class="orientation-marker center active">⬤</div>
+            <div class="orientation-marker right">R1</div>
+            <div class="orientation-marker right">R2</div>
+            <div class="orientation-marker right">R3</div>
+          </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+          <!-- Axis Control (Mandatory) -->
+          <div class="control-section mandatory" data-player="shared">
+            <h3>⚖️ Eje (Nivelación)</h3>
+            <div class="control-slots">
+              <div class="dice-slot pilot-slot" data-control="axis" data-player="pilot">
+                <span class="slot-label">Piloto</span>
+              </div>
+              <div class="dice-slot copilot-slot" data-control="axis" data-player="copilot">
+                <span class="slot-label">Copiloto</span>
+              </div>
+            </div>
+            <p class="control-hint">Obligatorio: Ambos jugadores deben colocar dados aquí</p>
+          </div>
+
+          <!-- Engines Control (Mandatory) -->
+          <div class="control-section mandatory" data-player="shared">
+            <h3>🚀 Motores (Velocidad)</h3>
+            <div class="control-slots">
+              <div class="dice-slot pilot-slot" data-control="engines" data-player="pilot">
+                <span class="slot-label">Piloto</span>
+              </div>
+              <div class="dice-slot copilot-slot" data-control="engines" data-player="copilot">
+                <span class="slot-label">Copiloto</span>
+              </div>
+            </div>
+            <p class="control-hint">Obligatorio: Controla la velocidad de aproximación</p>
+          </div>
+
+          <!-- Landing Gear (Pilot) -->
+          <div class="control-section" data-player="pilot">
+            <h3>🛞 Tren de Aterrizaje</h3>
+            <div class="deployment-track" id="landing-gear-track">
+              <div class="deployment-slot" data-required="1-2">1-2</div>
+              <div class="deployment-slot" data-required="3-4">3-4</div>
+              <div class="deployment-slot" data-required="5-6">5-6</div>
+            </div>
+            <p class="control-hint">Solo Piloto: Despliega con 3 dados</p>
+          </div>
+
+          <!-- Flaps (Co-Pilot) -->
+          <div class="control-section" data-player="copilot">
+            <h3>🪂 Flaps</h3>
+            <div class="deployment-track" id="flaps-track">
+              <div class="deployment-slot" data-required="1-2">1-2</div>
+              <div class="deployment-slot" data-required="3-4">3-4</div>
+              <div class="deployment-slot" data-required="5-6">5-6</div>
+            </div>
+            <p class="control-hint">Solo Copiloto: Despliega con 3 dados</p>
+          </div>
+
+          <!-- Coffee/Concentration (Shared Pool) -->
+          <div class="control-section coffee-section">
+            <h3>☕ Concentración (Cafés Compartidos)</h3>
+            <div class="coffee-display-shared">
+              <div class="coffee-pool">
+                <span class="coffee-label">Cafés Disponibles:</span>
+                <div id="shared-coffee" class="coffee-icons-shared"></div>
+                <span id="coffee-count" class="coffee-counter">0/3</span>
+              </div>
+            </div>
+            <div class="coffee-actions">
+              <div class="coffee-maker-container">
+                <div class="dice-slot coffee-slot" id="make-coffee-slot">
+                  <span class="slot-label">Descartar Dado</span>
+                </div>
+                <span class="coffee-arrow">➡️</span>
+                <span class="coffee-cup">☕</span>
+              </div>
+              <div class="coffee-buttons">
+                <button id="drink-coffee-btn" class="btn btn-coffee">Tomar Café (Ganar Relanzar)</button>
+              </div>
+              <div class="reroll-container">
+                <div class="dice-slot reroll-slot" id="reroll-slot">
+                  <span class="slot-label">Arrastra Dado para Relanzar</span>
+                </div>
+              </div>
+            </div>
+            <p class="control-hint">Arrastra un dado para hacer café (máx 3). Toma café, luego arrastra un dado para relanzarlo.</p>
+          </div>
+
+          <!-- Radio/Air Traffic Control -->
+          <div class="control-section radio-section" data-player="shared">
+            <h3>📻 Radio</h3>
+            <div class="radio-track" id="radio-track">
+              <div class="radio-slot" data-required="2">
+                <span class="plane-icon">✈️</span>
+                <span class="required-value">2</span>
+              </div>
+              <div class="radio-slot" data-required="4">
+                <span class="plane-icon">✈️</span>
+                <span class="required-value">4</span>
+              </div>
+              <div class="radio-slot" data-required="6">
+                <span class="plane-icon">✈️</span>
+                <span class="required-value">6</span>
+              </div>
+            </div>
+            <p class="control-hint">Despeja aviones colocando dados con valor exacto</p>
+          </div>
+
+          <!-- Brakes (Pilot) -->
+          <div class="control-section" data-player="pilot">
+            <h3>🛑 Frenos</h3>
+            <div class="control-slots">
+              <div class="dice-slot pilot-slot" data-control="brakes" data-player="pilot">
+                <span class="slot-label">Cualquier Valor</span>
+              </div>
+            </div>
+            <p class="control-hint">Solo Piloto: Usar después de aterrizar</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Player Areas -->
+      <div class="players-area">
+        <!-- Pilot -->
+        <div class="player-section pilot">
+          <h2>👨‍✈️ Piloto (Azul)</h2>
+          <div id="pilot-dice" class="dice-container"></div>
+        </div>
+
+        <!-- Co-Pilot -->
+        <div class="player-section copilot">
+          <h2>👨‍✈️ Copiloto (Naranja)</h2>
+          <div id="copilot-dice" class="dice-container"></div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button id="new-round-btn" class="btn btn-primary">Iniciar Nueva Ronda</button>
+        <button id="reset-game-btn" class="btn btn-secondary">Reiniciar Juego</button>
+      </div>
+
+      <!-- Messages -->
+      <div id="message-area" class="message-area"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
