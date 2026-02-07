@@ -30,57 +30,81 @@ body {
 }
 
 #app {
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Header */
 .game-header {
   text-align: center;
-  margin-bottom: 15px;
-  padding: 15px;
+  margin-bottom: 10px;
+  padding: 10px;
   background: linear-gradient(135deg, var(--bg-cockpit), var(--bg-panel));
-  border-radius: 15px;
+  border-radius: 12px;
   border: 2px solid var(--border-color);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
 }
 
 .game-header h1 {
   font-family: 'Orbitron', sans-serif;
-  font-size: 2.2rem;
+  font-size: 1.8rem;
   font-weight: 900;
   background: linear-gradient(135deg, var(--accent-blue), var(--accent-orange));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
   text-shadow: 0 0 30px var(--glow-blue);
 }
 
 .subtitle {
-  font-size: 1.2rem;
+  font-size: 0.9rem;
   color: var(--text-secondary);
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
 }
 
 /* Game Container */
 .game-container {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-rows: auto 1fr auto;
+  gap: 10px;
+  height: calc(100vh - 90px);
+  overflow: hidden;
+  grid-template-areas:
+    "status status status"
+    "pilot-area cockpit copilot-area"
+    "pilot-area actions copilot-area";
+}
+
+/* Responsive: tablets */
+@media (max-width: 1199px) {
+  .game-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-areas:
+      "status"
+      "cockpit"
+      "pilot-area"
+      "copilot-area"
+      "actions";
+    overflow-y: auto;
+  }
 }
 
 /* Game Status */
 .game-status {
+  grid-area: status;
   display: flex;
   justify-content: space-around;
-  gap: 15px;
-  padding: 12px;
+  gap: 10px;
+  padding: 8px;
   background: var(--bg-panel);
-  border-radius: 12px;
+  border-radius: 10px;
   border: 2px solid var(--border-color);
 }
 
@@ -111,11 +135,14 @@ body {
 
 /* Cockpit Board */
 .cockpit-board {
+  grid-area: cockpit;
   background: var(--bg-cockpit);
-  padding: 20px;
-  border-radius: 15px;
+  padding: 10px;
+  border-radius: 10px;
   border: 3px solid var(--border-color);
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.6);
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
 }
 
 /* Plane Orientation */
@@ -126,11 +153,11 @@ body {
 
 .orientation-label {
   font-family: 'Orbitron', sans-serif;
-  font-size: 1.2rem;
-  margin-bottom: 15px;
+  font-size: 1rem;
+  margin-bottom: 10px;
   color: var(--accent-blue);
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
 }
 
 .orientation-display {
@@ -185,8 +212,8 @@ body {
 
 .control-section {
   background: var(--bg-panel);
-  padding: 20px;
-  border-radius: 12px;
+  padding: 12px;
+  border-radius: 10px;
   border: 2px solid var(--border-color);
   transition: all 0.3s ease;
 }
@@ -203,11 +230,11 @@ body {
 
 .control-section h3 {
   font-family: 'Orbitron', sans-serif;
-  font-size: 1.1rem;
-  margin-bottom: 15px;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
   color: var(--accent-blue);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
 }
 
 /* Inherit from parent specific rule or default */
@@ -255,11 +282,11 @@ body {
 }
 
 .dice-slot {
-  min-width: 80px;
-  min-height: 80px;
+  min-width: 65px;
+  min-height: 65px;
   background: var(--bg-dark);
   border: 3px dashed var(--border-color);
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -364,34 +391,37 @@ body {
 
 /* Players Area */
 .players-area {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
+  display: contents;
 }
 
 .player-section {
   background: var(--bg-panel);
-  padding: 25px;
-  border-radius: 12px;
+  padding: 12px;
+  border-radius: 10px;
   border: 3px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
 }
 
 .player-section.pilot {
+  grid-area: pilot-area;
   border-color: var(--accent-blue);
-  box-shadow: 0 0 30px rgba(74, 158, 255, 0.1);
+  box-shadow: 0 0 25px rgba(74, 158, 255, 0.1);
   background: linear-gradient(135deg, var(--bg-panel), rgba(74, 158, 255, 0.05));
 }
 
 .player-section.copilot {
+  grid-area: copilot-area;
   border-color: var(--accent-orange);
-  box-shadow: 0 0 30px rgba(255, 140, 66, 0.1);
+  box-shadow: 0 0 25px rgba(255, 140, 66, 0.1);
   background: linear-gradient(135deg, var(--bg-panel), rgba(255, 140, 66, 0.05));
 }
 
 .player-section h2 {
   font-family: 'Orbitron', sans-serif;
-  font-size: 1.5rem;
-  margin-bottom: 20px;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
   text-align: center;
 }
 
@@ -401,6 +431,21 @@ body {
 
 .player-section.copilot h2 {
   color: var(--accent-orange);
+}
+
+/* Active Turn Indicator */
+.player-section.pilot.active-turn {
+  border: 4px solid var(--accent-blue);
+  box-shadow: 0 0 40px rgba(74, 158, 255, 0.6);
+  transform: scale(1.02);
+  transition: all 0.3s ease;
+}
+
+.player-section.copilot.active-turn {
+  border: 4px solid var(--accent-orange);
+  box-shadow: 0 0 40px rgba(255, 140, 66, 0.6);
+  transform: scale(1.02);
+  transition: all 0.3s ease;
 }
 
 /* Dice Container */
@@ -414,17 +459,17 @@ body {
 
 /* Dice */
 .die {
-  width: 70px;
-  height: 70px;
+  width: 60px;
+  height: 60px;
   background: linear-gradient(135deg, #ffffff, #f3f4f6);
-  border-radius: 12px;
+  border-radius: 10px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  padding: 8px;
+  padding: 6px;
   gap: 2px;
   cursor: grab;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   transition: all 0.3s ease;
   user-select: none;
   position: relative;
@@ -512,10 +557,12 @@ body {
 
 /* Action Buttons */
 .action-buttons {
+  grid-area: actions;
   display: flex;
-  gap: 15px;
+  gap: 10px;
   justify-content: center;
   flex-wrap: wrap;
+  padding: 8px;
 }
 
 .btn {
@@ -629,6 +676,112 @@ body {
 
 .shaking {
   animation: shake 0.5s ease-in-out;
+}
+
+@keyframes blink-red {
+  0%, 100% {
+    border-color: var(--accent-red);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+  }
+  50% {
+    border-color: var(--border-color);
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.2);
+  }
+}
+
+.dice-slot.mandatory-empty {
+  animation: blink-red 1.5s ease-in-out infinite;
+  border-style: dashed;
+}
+
+/* Speed Table Dynamic */
+.speed-table {
+  background: var(--bg-panel);
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid var(--border-color);
+  margin-bottom: 10px;
+}
+
+.speed-table h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  margin-bottom: 10px;
+  color: var(--accent-blue);
+  text-align: center;
+}
+
+.speed-grid-dynamic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.speed-values {
+  display: flex;
+  gap: 5px;
+}
+
+.value-badge {
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-dark);
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+}
+
+.value-badge.active {
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-orange));
+  border-color: var(--accent-blue);
+  color: white;
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(74, 158, 255, 0.6);
+  font-weight: 900;
+}
+
+.speed-indicator {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, var(--accent-orange), #ff6b35);
+  border-radius: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 12px rgba(255, 140, 66, 0.4);
+  transition: all 0.3s ease;
+}
+
+#min-indicator {
+  order: 4;
+}
+
+#max-indicator {
+  order: 10;
+}
+
+.current-speed-display {
+  margin-top: 10px;
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-blue);
+  padding: 8px;
+  background: var(--bg-dark);
+  border-radius: 8px;
+  border: 2px solid var(--border-color);
 }
 
 /* Popup Message System */

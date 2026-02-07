@@ -33,63 +33,41 @@
         </div>
       </div>
 
-      <!-- Speed Table -->
+      <!-- Speed Table Dynamic -->
       <div class="speed-table">
-        <h3>📊 Tabla de Velocidad (Descenso Máximo: 2)</h3>
-        <div class="speed-grid">
-          <div class="speed-zone">
-            <div class="zone-header">Zona 0 - Sin Descenso</div>
-            <div class="zone-values">
-              <span class="value-badge">1</span>
-              <span class="value-badge">2</span>
-              <span class="value-badge">3</span>
-            </div>
-            <div class="zone-descent">Descenso: <strong>0</strong></div>
+        <h3>📊 Tabla de Velocidad</h3>
+        <div class="speed-grid-dynamic">
+          <span class="value-badge" data-value="1" style="order: 1">1</span>
+          <span class="value-badge" data-value="2" style="order: 2">2</span>
+          <span class="value-badge" data-value="3" style="order: 3">3</span>
+          
+          <div class="speed-indicator" id="min-indicator" style="order: 4">
+            <span class="indicator-label">MIN</span>
           </div>
           
-          <div class="zone-separator"></div>
+          <span class="value-badge" data-value="4" style="order: 5">4</span>
+          <span class="value-badge" data-value="5" style="order: 6">5</span>
+          <span class="value-badge" data-value="6" style="order: 7">6</span>
+          <span class="value-badge" data-value="7" style="order: 8">7</span>
+          <span class="value-badge" data-value="8" style="order: 9">8</span>
+          <span class="value-badge" data-value="9" style="order: 10">9</span>
           
-          <div class="speed-zone">
-            <div class="zone-header">Zona 1 - Descenso Lento</div>
-            <div class="zone-values">
-              <span class="value-badge">4</span>
-              <span class="value-badge">5</span>
-              <span class="value-badge">6</span>
-            </div>
-            <div class="zone-descent">Descenso: <strong>1</strong></div>
+          <div class="speed-indicator" id="max-indicator" style="order: 11">
+            <span class="indicator-label">MAX</span>
           </div>
           
-          <div class="zone-separator"></div>
-          
-          <div class="speed-zone">
-            <div class="zone-header">Zona 2 - Descenso Óptimo</div>
-            <div class="zone-values">
-              <span class="value-badge">7</span>
-              <span class="value-badge">8</span>
-              <span class="value-badge">9</span>
-            </div>
-            <div class="zone-descent">Descenso: <strong>2</strong></div>
-          </div>
-          
-          <div class="zone-separator"></div>
-          
-          <div class="speed-zone">
-            <div class="zone-header">Zona 2 - Máximo</div>
-            <div class="zone-values">
-              <span class="value-badge">10</span>
-              <span class="value-badge">11</span>
-              <span class="value-badge">12</span>
-            </div>
-            <div class="zone-descent">Descenso: <strong>2</strong></div>
-          </div>
+          <span class="value-badge" data-value="10" style="order: 12">10</span>
+          <span class="value-badge" data-value="11" style="order: 13">11</span>
+          <span class="value-badge" data-value="12" style="order: 14">12</span>
         </div>
+        <div id="current-speed" class="current-speed-display">Velocidad: --</div>
       </div>
 
       <!-- Main Game Board -->
       <div class="cockpit-board">
         <!-- Plane Orientation Indicator -->
         <div class="plane-orientation">
-          <div class="orientation-label">Plane Orientation</div>
+          <div class="orientation-label">Orientación del Avión</div>
           <div class="orientation-display">
             <div class="orientation-marker left">L3</div>
             <div class="orientation-marker left">L2</div>

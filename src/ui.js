@@ -150,7 +150,8 @@ export class UIManager {
     this.renderPlaneOrientation();
     this.renderCoffee();
     this.renderRadio();
-    this.renderSpeedTable();
+    this.renderSpeedTableDynamic();
+    this.highlightCurrentPlayer();
   }
 
   renderStatus() {
@@ -277,22 +278,39 @@ export class UIManager {
         slot.appendChild(label);
       }
       slot.classList.remove('filled');
+      slot.classList.remove('mandatory-empty');
     });
 
     // Render axis controls
     if (this.game.axisPilot !== null) {
       this.fillSlot('[data-control="axis"][data-player="pilot"]', this.game.axisPilot);
+    } else {
+      // Mark as mandatory empty
+      const slot = document.querySelector('[data-control="axis"][data-player="pilot"]');
+      if (slot) slot.classList.add('mandatory-empty');
     }
     if (this.game.axisCopilot !== null) {
       this.fillSlot('[data-control="axis"][data-player="copilot"]', this.game.axisCopilot);
+    } else {
+      // Mark as mandatory empty
+      const slot = document.querySelector('[data-control="axis"][data-player="copilot"]');
+      if (slot) slot.classList.add('mandatory-empty');
     }
 
     // Render engine controls
     if (this.game.enginesPilot !== null) {
       this.fillSlot('[data-control="engines"][data-player="pilot"]', this.game.enginesPilot);
+    } else {
+      // Mark as mandatory empty
+      const slot = document.querySelector('[data-control="engines"][data-player="pilot"]');
+      if (slot) slot.classList.add('mandatory-empty');
     }
     if (this.game.enginesCopilot !== null) {
       this.fillSlot('[data-control="engines"][data-player="copilot"]', this.game.enginesCopilot);
+    } else {
+      // Mark as mandatory empty
+      const slot = document.querySelector('[data-control="engines"][data-player="copilot"]');
+      if (slot) slot.classList.add('mandatory-empty');
     }
 
     // Render brakes
@@ -463,8 +481,8 @@ export class UIManager {
       return;
     }
 
-    const value = parseInt(this.draggedDie.die.value);
-    const result = this.game.placeDice(this.draggedDie.die.id, control, value);
+    // FIX: Pass player instead of value to placeDice
+    const result = this.game.placeDice(this.draggedDie.die.id, control, this.draggedDie.player);
 
     if (result.success) {
       this.render();
@@ -690,5 +708,62 @@ export class UIManager {
       this.autoScrollInterval = null;
     }
     this.lastDragY = undefined;
+  }
+
+  highlightCurrentPlayer() {
+    const pilotSection = document.querySelector('.player-section.pilot');
+    const copilotSection = document.querySelector('.player-section.copilot');
+    
+    if (!pilotSection || !copilotSection) return;
+    
+    if (this.game.currentPlayer === 'pilot') {
+      pilotSection.classList.add('active-turn');
+      copilotSection.classList.remove('active-turn');
+    } else {
+      copilotSection.classList.add('active-turn');
+      pilotSection.classList.remove('active-turn');
+    }
+  }
+
+  renderSpeedTableDynamic() {
+    const engineSum = (this.game.enginesPilot || 0) + (this.game.enginesCopilot || 0);
+    const landingGearSteps = this.game.landingGear.length; // 0, 1, 2, or 3
+    const flapsSteps = this.game.flaps.length; // 0, 1, 2, or 3
+    
+    // MIN starts between 3-4, moves +1 right for each landing gear step
+    // Position 4 = between 3 and 4, then 5, 6, 7 (max)
+    let minPosition = 4 + landingGearSteps;
+    
+    // MAX starts between 9-10, moves +1 right for each flaps step  
+    // Position 10 = between 9 and 10, then 11, 12, 13 (max)
+    let maxPosition = 10 + flapsSteps;
+    
+    // Update indicators position using CSS order
+    const minIndicator = document.getElementById('min-indicator');
+    const maxIndicator = document.getElementById('max-indicator');
+    
+    if (minIndicator) {
+      minIndicator.style.order = minPosition;
+    }
+    if (maxIndicator) {
+      maxIndicator.style.order = maxPosition;
+    }
+    
+    // Update current speed display
+    const speedDisplay = document.getElementById('current-speed');
+    if (speedDisplay) {
+      if (engineSum > 0) {
+        speedDisplay.textContent = `Velocidad: ${engineSum}`;
+        speedDisplay.style.display = 'block';
+      } else {
+        speedDisplay.textContent = 'Velocidad: --';
+      }
+    }
+    
+    // Highlight current speed value
+    document.querySelectorAll('.value-badge').forEach(badge => {
+      const value = parseInt(badge.dataset.value || badge.textContent);
+      badge.classList.toggle('active', value === engineSum && engineSum > 0);
+    });
   }
 }
