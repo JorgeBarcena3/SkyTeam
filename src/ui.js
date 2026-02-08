@@ -5,6 +5,7 @@ export class UIManager {
   constructor(gameState) {
     this.game = gameState;
     this.draggedDie = null;
+    this.selectedDie = null; // For click-based placement
     this.autoScrollInterval = null;
     this.lastDragY = undefined;
     this.setupEventListeners();
@@ -25,6 +26,8 @@ export class UIManager {
     document.querySelectorAll('.dice-slot').forEach(slot => {
       slot.addEventListener('dragover', (e) => this.handleDragOver(e));
       slot.addEventListener('drop', (e) => this.handleDrop(e));
+      // Add click handler for click-based placement
+      slot.addEventListener('click', (e) => this.handleSlotClick(e));
     });
 
     // Setup drop handlers for deployment tracks
@@ -41,6 +44,22 @@ export class UIManager {
     
     // Setup radio track
     this.setupRadioListeners();
+
+    // Setup discard slot
+    const discardSlot = document.getElementById('discard-slot');
+    if (discardSlot) {
+      discardSlot.addEventListener('dragover', (e) => this.handleDragOver(e));
+      discardSlot.addEventListener('drop', (e) => this.handleDiscardDrop(e));
+      discardSlot.addEventListener('click', (e) => this.handleDiscardClick(e));
+    }
+
+    // Setup help buttons
+    document.querySelectorAll('.help-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.showHelp(btn.dataset.help);
+      });
+    });
   }
 
   setupCoffeeListeners() {
@@ -61,6 +80,12 @@ export class UIManager {
       e.preventDefault();
       slot.classList.remove('drag-over');
       this.handleMakeCoffeeDrop(e);
+    });
+    
+    // Add click handler for click-based placement
+    slot.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.handleMakeCoffeeClick(e);
     });
   }
 
@@ -91,13 +116,55 @@ export class UIManager {
   }
 
   setupRadioListeners() {
-    const radioTrack = document.getElementById('radio-track');
-    if (!radioTrack) return;
+    // Listeners are now attached in renderRadio() because slots are dynamic
+  }
 
-    const slots = radioTrack.querySelectorAll('.radio-slot');
-    slots.forEach((slot, index) => {
-      slot.addEventListener('dragover', (e) => this.handleDragOver(e));
-      slot.addEventListener('drop', (e) => this.handleRadioDrop(e, index));
+  // ... (other setup methods)
+
+  startNewRound() {
+    if (this.game.gameOver) {
+      this.showGameOverModal('El juego ha terminado. Por favor reinicia (F5) para jugar de nuevo.', this.game.gameWon);
+      return;
+    }
+
+    const result = this.game.endRound();
+    
+    if (result.gameOver) {
+      if (result.gameWon) {
+        this.showGameOverModal(result.message, true);
+        this.game.gameWon = true; // Ensure state reflects win
+      } else {
+        this.showGameOverModal(result.message, false);
+      }
+      this.game.gameOver = true;
+    } else if (!result.success) {
+      this.showMessage(result.message, 'error');
+      // If endRound returns failure but not gameOver, it means critical error in state? 
+      // Actually usually endRound returns success unless game over or error.
+    } else {
+      this.showMessage(result.message, 'info');
+    }
+
+    this.render();
+  }
+
+  showGameOverModal(message, isWin) {
+    const modal = document.createElement('div');
+    modal.className = 'game-over-modal';
+    
+    modal.innerHTML = `
+      <div class="game-over-content ${isWin ? 'win' : 'loss'}">
+        <h2>${isWin ? '🎉 ¡VICTORIA!' : '💥 GAME OVER'}</h2>
+        <p class="game-over-message">${message}</p>
+        <button id="restart-btn" class="btn btn-primary">Reiniciar Juego</button>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add click listener for restart
+    document.getElementById('restart-btn').addEventListener('click', () => {
+      window.location.reload();
     });
   }
 
@@ -111,6 +178,11 @@ export class UIManager {
       slot.addEventListener('drop', (e) => {
         const control = trackId.replace('-track', '');
         this.handleDeploymentDrop(e, control, index);
+      });
+      // Add click handler for click-based placement
+      slot.addEventListener('click', (e) => {
+        const control = trackId.replace('-track', '');
+        this.handleDeploymentClick(e, control, index);
       });
     });
   }
@@ -139,6 +211,7 @@ export class UIManager {
   resetGame() {
     this.game.reset();
     this.game.rollDice();
+    this.selectedDie = null; // Clear selection on reset
     this.showMessage('¡Nuevo juego iniciado! Lanza los dados y colócalos en los controles.', 'info');
     this.render();
   }
@@ -193,6 +266,16 @@ export class UIManager {
       dieEl.draggable = true;
       dieEl.addEventListener('dragstart', (e) => this.handleDragStart(e, die, player));
       dieEl.addEventListener('dragend', (e) => this.handleDragEnd(e));
+      // Add click handler for selection
+      dieEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.handleDieClick(die, player);
+      });
+    }
+
+    // Add selected class if this die is selected
+    if (this.selectedDie && this.selectedDie.die.id === die.id) {
+      dieEl.classList.add('selected');
     }
 
     return dieEl;
@@ -329,7 +412,11 @@ export class UIManager {
     const slot = document.querySelector(selector);
     if (slot) {
       const player = slot.dataset.player || 'pilot';
-      slot.innerHTML = `<div class="die ${player}" data-value="${value}">${this.getDieFace(value)}</div>`;
+      // Preserve existing label if it exists
+      const label = slot.querySelector('.slot-label');
+      const labelHTML = label ? label.outerHTML : '';
+      
+      slot.innerHTML = `${labelHTML}<div class="die ${player}" data-value="${value}">${this.getDieFace(value)}</div>`;
       slot.classList.add('filled');
     }
   }
@@ -398,13 +485,38 @@ export class UIManager {
     const radioTrack = document.getElementById('radio-track');
     if (!radioTrack) return;
 
-    const slots = radioTrack.querySelectorAll('.radio-slot');
-    slots.forEach((slot, index) => {
+    // Clear existing slots to rebuild them with new data if needed, 
+    // OR just update them. Since structure changed, better to rebuild or be robust.
+    // The HTML has hardcoded slots. Let's clear and rebuild them dynamically based on state
+    // to support the dynamic distances.
+    radioTrack.innerHTML = '';
+
+    this.game.radioPlanes.forEach((plane, index) => {
+      const slot = document.createElement('div');
+      slot.className = 'radio-slot';
+      slot.dataset.required = plane.value;
+      slot.dataset.index = index; // Add index data for click handlers
+      
       if (this.game.radioCleared[index]) {
         slot.classList.add('cleared');
+        slot.innerHTML = `
+            <span class="plane-icon">✈️</span>
+            <span class="cleared-label">DESPEJADO</span>
+        `;
       } else {
-        slot.classList.remove('cleared');
+        slot.innerHTML = `
+            <span class="distance-badge">Dist: ${plane.distance}</span>
+            <span class="plane-icon">✈️</span>
+            <span class="required-value">${plane.value}</span>
+        `;
       }
+
+      // Add listeners
+      slot.addEventListener('dragover', (e) => this.handleDragOver(e));
+      slot.addEventListener('drop', (e) => this.handleRadioDrop(e, index));
+      slot.addEventListener('click', (e) => this.handleRadioClick(e, index));
+
+      radioTrack.appendChild(slot);
     });
   }
 
@@ -564,6 +676,83 @@ export class UIManager {
     this.draggedDie = null;
   }
 
+  handleMakeCoffeeClick(e) {
+    if (!this.selectedDie) return;
+
+    const { die, player } = this.selectedDie;
+
+    if (player !== this.game.currentPlayer) {
+      this.showMessage(`Es el turno del ${this.game.currentPlayer === 'pilot' ? 'Piloto' : 'Copiloto'}`, 'warning');
+      this.selectedDie = null;
+      this.render();
+      return;
+    }
+
+    const result = this.game.makeCoffee(die.id, player);
+    
+    if (result.success) {
+      this.showMessage(result.message, 'success');
+      this.selectedDie = null;
+      this.render(); 
+    } else {
+      this.showMessage(result.message, 'warning');
+      this.selectedDie = null;
+      this.render();
+    }
+  }
+
+  handleDeploymentClick(e, control, slotIndex) {
+    if (!this.selectedDie) return;
+    
+    const { die, player } = this.selectedDie;
+    
+    // Check player restrictions
+    if (control === 'landing-gear' && player !== 'pilot') {
+      this.showMessage('Solo el Piloto puede desplegar el Tren de Aterrizaje', 'error');
+      this.selectedDie = null;
+      this.render();
+      return;
+    }
+    if (control === 'flaps' && player !== 'copilot') {
+      this.showMessage('Solo el Copiloto puede desplegar los Flaps', 'error');
+      this.selectedDie = null;
+      this.render();
+      return;
+    }
+    
+    // Check turn
+    if (player !== this.game.currentPlayer) {
+      this.showMessage(`Es el turno del ${this.game.currentPlayer === 'pilot' ? 'Piloto' : 'Copiloto'}`, 'warning');
+      this.selectedDie = null;
+      this.render();
+      return;
+    }
+    
+    // Check order
+    const currentLength = control === 'landing-gear' ? 
+      this.game.landingGear.length : this.game.flaps.length;
+    
+    if (slotIndex !== currentLength) {
+      this.showMessage('Debes llenar las casillas en orden', 'warning');
+      this.selectedDie = null;
+      this.render();
+      return;
+    }
+    
+    // Place die
+    const result = this.game.placeDice(die.id, control, player);
+    
+    if (result.success) {
+      this.showMessage(`${player === 'pilot' ? 'Piloto' : 'Copiloto'} desplegó ${control === 'landing-gear' ? 'Tren' : 'Flaps'} ${slotIndex + 1}`, 'success');
+      this.selectedDie = null;
+      this.render();
+    } else {
+      this.showMessage(result.message, 'error');
+      this.selectedDie = null;
+      this.render();
+    }
+  }
+
   handleRadioDrop(e, slotIndex) {
     if (!this.draggedDie) return;
 
@@ -585,6 +774,31 @@ export class UIManager {
     }
 
     this.draggedDie = null;
+  }
+
+  handleRadioClick(e, slotIndex) {
+    if (!this.selectedDie) return;
+    
+    const { die, player } = this.selectedDie;
+    
+    if (player !== this.game.currentPlayer) {
+      this.showMessage(`Es el turno del ${this.game.currentPlayer === 'pilot' ? 'Piloto' : 'Copiloto'}`, 'warning');
+      this.selectedDie = null;
+      this.render();
+      return;
+    }
+    
+    const result = this.game.placeRadio(die.id, player, slotIndex);
+    
+    if (result.success) {
+      this.showMessage(result.message, 'success');
+      this.selectedDie = null;
+      this.render();
+    } else {
+      this.showMessage(result.message, 'error');
+      this.selectedDie = null;
+      this.render();
+    }
   }
 
   handleDrinkCoffee() {
@@ -713,15 +927,30 @@ export class UIManager {
   highlightCurrentPlayer() {
     const pilotSection = document.querySelector('.player-section.pilot');
     const copilotSection = document.querySelector('.player-section.copilot');
+    const turnLabels = document.querySelectorAll('.status-item:nth-child(2) .label');
     
     if (!pilotSection || !copilotSection) return;
     
     if (this.game.currentPlayer === 'pilot') {
       pilotSection.classList.add('active-turn');
       copilotSection.classList.remove('active-turn');
+      // Update body class for cursor
+      document.body.classList.remove('copilot-turn');
+      document.body.classList.add('pilot-turn');
+      // Update turn label color
+      turnLabels.forEach(label => {
+        label.style.color = 'var(--accent-blue)';
+      });
     } else {
       copilotSection.classList.add('active-turn');
       pilotSection.classList.remove('active-turn');
+      // Update body class for cursor
+      document.body.classList.remove('pilot-turn');
+      document.body.classList.add('copilot-turn');
+      // Update turn label color
+      turnLabels.forEach(label => {
+        label.style.color = 'var(--accent-orange)';
+      });
     }
   }
 
@@ -730,13 +959,13 @@ export class UIManager {
     const landingGearSteps = this.game.landingGear.length; // 0, 1, 2, or 3
     const flapsSteps = this.game.flaps.length; // 0, 1, 2, or 3
     
-    // MIN starts between 3-4, moves +1 right for each landing gear step
-    // Position 4 = between 3 and 4, then 5, 6, 7 (max)
-    let minPosition = 4 + landingGearSteps;
+    // MIN starts between 3-4 (order 30-40), moves +10 right for each landing gear step
+    // Position 35 = between 3 and 4, then 45, 55, 65 (max)
+    let minPosition = 35 + (landingGearSteps * 10);
     
-    // MAX starts between 9-10, moves +1 right for each flaps step  
-    // Position 10 = between 9 and 10, then 11, 12, 13 (max)
-    let maxPosition = 10 + flapsSteps;
+    // MAX starts between 9-10 (order 90-100), moves +10 right for each flaps step  
+    // Position 95 = between 9 and 10, then 105, 115, 125 (max)
+    let maxPosition = 95 + (flapsSteps * 10);
     
     // Update indicators position using CSS order
     const minIndicator = document.getElementById('min-indicator');
@@ -765,5 +994,129 @@ export class UIManager {
       const value = parseInt(badge.dataset.value || badge.textContent);
       badge.classList.toggle('active', value === engineSum && engineSum > 0);
     });
+  }
+
+  handleSlotClick(e) {
+    // Only process if we have a selected die
+    if (!this.selectedDie) return;
+    
+    const slot = e.target.closest('.dice-slot');
+    if (!slot) return;
+    
+    const control = slot.dataset.control;
+    const player = slot.dataset.player;
+    
+    // Check if slot is strictly for one player
+    if (player && player !== this.selectedDie.player) {
+      this.showMessage(`Casilla reservada para el ${player === 'pilot' ? 'Piloto' : 'Copiloto'}`, 'warning');
+      return;
+    }
+    
+    // Validate it's the current player's turn
+    if (this.selectedDie.player !== this.game.currentPlayer) {
+      this.showMessage(`Es el turno del ${this.game.currentPlayer === 'pilot' ? 'Piloto' : 'Copiloto'}`, 'warning');
+      this.selectedDie = null;
+      this.render();
+      return;
+    }
+    
+    // Place the die using the same logic as drag & drop
+    const result = this.game.placeDice(this.selectedDie.die.id, control, this.selectedDie.player);
+    
+    if (result.success) {
+      this.selectedDie = null; // Clear selection
+      this.render();
+      this.showMessage(result.message, 'success');
+      
+      if (result.endRoundWarning) {
+        this.showMessage(result.endRoundWarning, 'warning');
+      }
+    } else {
+      this.showMessage(result.message, 'error');
+    }
+  }
+
+  handleDieClick(die, player) {
+    // Verify it's this player's turn
+    if (player !== this.game.currentPlayer) {
+      this.showMessage(`Es el turno del ${this.game.currentPlayer === 'pilot' ? 'Piloto' : 'Copiloto'}`, 'warning');
+      return;
+    }
+    
+    // Toggle selection
+    if (this.selectedDie && this.selectedDie.die.id === die.id) {
+      // Deselect
+      this.selectedDie = null;
+    } else {
+      // Select this die
+      this.selectedDie = { die, player };
+    }
+    
+    // Re-render to show selection
+    this.render();
+  }
+
+  handleDiscardDrop(e) {
+    e.preventDefault();
+    
+    if (!this.draggedDie) return;
+    
+    const { die, player } = this.draggedDie;
+    
+    // Verify it's this player's turn
+    if (player !== this.game.currentPlayer) {
+      this.showMessage(`Es el turno del ${this.game.currentPlayer === 'pilot' ? 'Piloto' : 'Copiloto'}`, 'warning');
+      this.draggedDie = null;
+      return;
+    }
+    
+    // Discard the die
+    die.used = true;
+    
+    // Switch turn
+    this.game.currentPlayer = this.game.currentPlayer === 'pilot' ? 'copilot' : 'pilot';
+    
+    this.draggedDie = null;
+    this.render();
+    this.showMessage(`Dado descartado. Turno del ${this.game.currentPlayer === 'pilot' ? 'Piloto' : 'Copiloto'}`, 'info');
+  }
+
+  handleDiscardClick(e) {
+    if (!this.selectedDie) return;
+    
+    const { die, player } = this.selectedDie;
+    
+    // Verify it's this player's turn
+    if (player !== this.game.currentPlayer) {
+      this.showMessage(`Es el turno del ${this.game.currentPlayer === 'pilot' ? 'Piloto' : 'Copiloto'}`, 'warning');
+      this.selectedDie = null;
+      this.render();
+      return;
+    }
+    
+    // Discard the die
+    die.used = true;
+    
+    // Switch turn
+    this.game.currentPlayer = this.game.currentPlayer === 'pilot' ? 'copilot' : 'pilot';
+    
+    this.selectedDie = null;
+    this.render();
+    this.showMessage(`Dado descartado. Turno del ${this.game.currentPlayer === 'pilot' ? 'Piloto' : 'Copiloto'}`, 'info');
+  }
+
+  showHelp(topic) {
+    const helpTexts = {
+      'axis': '🎯 Eje (Nivelación): Coloca 1 dado de cada jugador. La diferencia entre los valores mueve el avión horizontalmente hacia el lado del valor mayor.',
+      'engines': '⚙️ Motores (Velocidad): Coloca 1 dado de cada jugador. La suma determina la velocidad del avión. Debe estar entre MIN y MAX.',
+      'landing-gear': '🛬 Tren de Aterrizaje: Solo Piloto. Despliega con 3 dados en secuencia 1-2, 3-4, 5-6. Cada paso completado mueve el indicador MIN +1 en la tabla de velocidad.',
+      'flaps': '🪂 Flaps: Solo Copiloto. Despliega con 3 dados en secuencia 1-2, 3-4, 5-6. Cada paso completado mueve el indicador MAX +1 en la tabla de velocidad.',
+      'coffee': '☕ Cafés: Arrastra un dado para hacer café (máx 3 compartidos). Toma café para relanzar un dado. Si no tienes cafés disponibles, el dado se descarta.',
+      'radio': '📻 Radio: Coloca dados en orden 2, 4, 6 para comunicarte con la torre de control. Ambos jugadores pueden participar.',
+      'discard': '🗑️ Descartar Dado: Arrastra un dado aquí para descartarlo y pasar el turno al otro jugador. Útil cuando no tienes jugadas válidas.'
+    };
+
+    const message = helpTexts[topic] || 'Ayuda no disponible';
+    this.showMessage(message, 'info');
   }
 }

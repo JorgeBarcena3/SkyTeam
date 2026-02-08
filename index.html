@@ -37,28 +37,28 @@
       <div class="speed-table">
         <h3>📊 Tabla de Velocidad</h3>
         <div class="speed-grid-dynamic">
-          <span class="value-badge" data-value="1" style="order: 1">1</span>
-          <span class="value-badge" data-value="2" style="order: 2">2</span>
-          <span class="value-badge" data-value="3" style="order: 3">3</span>
+          <span class="value-badge" data-value="1" style="order: 10">1</span>
+          <span class="value-badge" data-value="2" style="order: 20">2</span>
+          <span class="value-badge" data-value="3" style="order: 30">3</span>
           
-          <div class="speed-indicator" id="min-indicator" style="order: 4">
+          <div class="speed-indicator" id="min-indicator" style="order: 35">
             <span class="indicator-label">MIN</span>
           </div>
           
-          <span class="value-badge" data-value="4" style="order: 5">4</span>
-          <span class="value-badge" data-value="5" style="order: 6">5</span>
-          <span class="value-badge" data-value="6" style="order: 7">6</span>
-          <span class="value-badge" data-value="7" style="order: 8">7</span>
-          <span class="value-badge" data-value="8" style="order: 9">8</span>
-          <span class="value-badge" data-value="9" style="order: 10">9</span>
+          <span class="value-badge" data-value="4" style="order: 40">4</span>
+          <span class="value-badge" data-value="5" style="order: 50">5</span>
+          <span class="value-badge" data-value="6" style="order: 60">6</span>
+          <span class="value-badge" data-value="7" style="order: 70">7</span>
+          <span class="value-badge" data-value="8" style="order: 80">8</span>
+          <span class="value-badge" data-value="9" style="order: 90">9</span>
           
-          <div class="speed-indicator" id="max-indicator" style="order: 11">
+          <div class="speed-indicator" id="max-indicator" style="order: 95">
             <span class="indicator-label">MAX</span>
           </div>
           
-          <span class="value-badge" data-value="10" style="order: 12">10</span>
-          <span class="value-badge" data-value="11" style="order: 13">11</span>
-          <span class="value-badge" data-value="12" style="order: 14">12</span>
+          <span class="value-badge" data-value="10" style="order: 100">10</span>
+          <span class="value-badge" data-value="11" style="order: 110">11</span>
+          <span class="value-badge" data-value="12" style="order: 120">12</span>
         </div>
         <div id="current-speed" class="current-speed-display">Velocidad: --</div>
       </div>
@@ -122,7 +122,7 @@
 
           <!-- Flaps (Co-Pilot) -->
           <div class="control-section" data-player="copilot">
-            <h3>🪂 Flaps</h3>
+            <h3>🪂 Flaps <button class="help-btn" data-help="flaps">?</button></h3>
             <div class="deployment-track" id="flaps-track">
               <div class="deployment-slot" data-required="1-2">1-2</div>
               <div class="deployment-slot" data-required="3-4">3-4</div>
@@ -158,12 +158,11 @@
                 </div>
               </div>
             </div>
-            <p class="control-hint">Arrastra un dado para hacer café (máx 3). Toma café, luego arrastra un dado para relanzarlo.</p>
           </div>
 
           <!-- Radio/Air Traffic Control -->
           <div class="control-section radio-section" data-player="shared">
-            <h3>📻 Radio</h3>
+            <h3>📻 Radio <button class="help-btn" data-help="radio">?</button></h3>
             <div class="radio-track" id="radio-track">
               <div class="radio-slot" data-required="2">
                 <span class="plane-icon">✈️</span>
@@ -179,6 +178,17 @@
               </div>
             </div>
             <p class="control-hint">Despeja aviones colocando dados con valor exacto</p>
+          </div>
+
+          <!-- Discard Panel -->
+          <div class="control-section discard-section">
+            <h3>🗑️ Descartar Dado <button class="help-btn" data-help="discard">?</button></h3>
+            <div class="discard-zone" id="discard-zone">
+              <div class="discard-slot" id="discard-slot">
+                <span class="discard-icon">🗑️</span>
+                <span class="discard-text">Arrastra aquí</span>
+              </div>
+            </div>
           </div>
 
           <!-- Brakes (Pilot) -->
@@ -215,8 +225,6 @@
         <button id="reset-game-btn" class="btn btn-secondary">Reiniciar Juego</button>
       </div>
 
-      <!-- Messages -->
-      <div id="message-area" class="message-area"></div>
     </div>
   </div>
 

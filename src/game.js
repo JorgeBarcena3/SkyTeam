@@ -37,7 +37,11 @@ export class GameState {
     this.copilotCanReroll = false;
     
     // Radio planes to clear
-    this.radioPlanes = [2, 4, 6]; // Values needed to clear planes
+    this.radioPlanes = [
+      { value: 2, distance: 4 }, // Plane 1 requires value 2, is at distance 4
+      { value: 4, distance: 3 }, // Plane 2 requires value 4, is at distance 3
+      { value: 6, distance: 2 }  // Plane 3 requires value 6, is at distance 2
+    ]; 
     this.radioCleared = [false, false, false];
   }
 
@@ -173,10 +177,18 @@ export class GameState {
       return { success: false, message: 'JUEGO TERMINADO: ¡Motores no configurados!', gameOver: true };
     }
 
-    // Calculate axis (plane orientation)
+    // Calculate axis (plane orientation) - UPDATED PHYSICS
     const axisDiff = this.axisPilot - this.axisCopilot;
-    this.planeOrientation += Math.sign(axisDiff);
-    this.planeOrientation = Math.max(-3, Math.min(3, this.planeOrientation));
+    this.planeOrientation += axisDiff; // Magnitude based on difference
+    
+    // Check for excessive orientation
+    if (Math.abs(this.planeOrientation) > 3) {
+       this.gameOver = true;
+       return { success: false, message: 'JUEGO TERMINADO: ¡Avión fuera de control (inclinación excesiva)!', gameOver: true };
+    }
+    
+    // Clamp orientation ONLY if not game over (handled above)
+    // this.planeOrientation = Math.max(-3, Math.min(3, this.planeOrientation)); 
 
     // Calculate speed and descent using speed table
     const engineSum = this.enginesPilot + this.enginesCopilot;
@@ -184,6 +196,15 @@ export class GameState {
     const descent = this.getDescentRate(engineSum, hasFlaps);
     
     this.approachDistance -= descent;
+
+    // Check for radio collisions - NEW
+    const pendingPlanes = this.radioPlanes.filter((plane, index) => !this.radioCleared[index]);
+    for (const plane of pendingPlanes) {
+      if (this.approachDistance <= plane.distance) {
+        this.gameOver = true;
+        return { success: false, message: `JUEGO TERMINADO: ¡COLISIÓN AÉREA! No contactaste con el avión a distancia ${plane.distance}.`, gameOver: true };
+      }
+    }
 
     // Check if landed
     if (this.approachDistance <= 0) {
@@ -319,8 +340,8 @@ export class GameState {
       return { success: false, message: 'Avión ya despejado' };
     }
 
-    if (die.value !== this.radioPlanes[slotIndex]) {
-      return { success: false, message: `Necesitas ${this.radioPlanes[slotIndex]} para despejar este avión` };
+    if (die.value !== this.radioPlanes[slotIndex].value) {
+      return { success: false, message: `Necesitas ${this.radioPlanes[slotIndex].value} para despejar este avión` };
     }
 
     // Mark dice as used and clear the plane
