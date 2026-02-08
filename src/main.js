@@ -11,7 +11,7 @@ const tutorial = new TutorialManager(ui);
 // Start first game
 game.rollDice();
 ui.render();
-ui.showMessage('Welcome to SkyTeam! Place dice on Axis and Engines (mandatory), then click "Start New Round"', 'info');
+ui.showMessage('¡Bienvenido a SkyTeam! Colocad dados en Ejes y Motores (obligatorio), luego clic en "Iniciar Nueva Ronda"', 'info');
 
 // Make game accessible from console for debugging
 window.game = game;

@@ -127,6 +127,22 @@ export class UIManager {
       return;
     }
 
+    // Check if all dice are used
+    const pilotUnusedCount = this.game.pilotDice.reduce((acc, d) => acc + (d.used ? 0 : 1), 0);
+    const copilotUnusedCount = this.game.copilotDice.reduce((acc, d) => acc + (d.used ? 0 : 1), 0);
+    
+    console.log('Validating Round End:', {
+      pilotDice: this.game.pilotDice,
+      copilotDice: this.game.copilotDice,
+      pilotUnusedCount,
+      copilotUnusedCount
+    });
+
+    if (pilotUnusedCount > 0 || copilotUnusedCount > 0) {
+      this.showMessage(`¡Debéis colocar TODOS los dados antes de terminar la ronda! (Faltan: ${pilotUnusedCount + copilotUnusedCount})`, 'warning');
+      return;
+    }
+
     const result = this.game.endRound();
     
     if (result.gameOver) {
@@ -139,8 +155,6 @@ export class UIManager {
       this.game.gameOver = true;
     } else if (!result.success) {
       this.showMessage(result.message, 'error');
-      // If endRound returns failure but not gameOver, it means critical error in state? 
-      // Actually usually endRound returns success unless game over or error.
     } else {
       this.showMessage(result.message, 'info');
     }
@@ -187,26 +201,7 @@ export class UIManager {
     });
   }
 
-  startNewRound() {
-    if (this.game.gameOver) {
-      this.showMessage('El juego ha terminado. Por favor reinicia para jugar de nuevo.', 'warning');
-      return;
-    }
 
-    const result = this.game.endRound();
-    
-    if (result.gameOver) {
-      this.showMessage(result.message, result.gameWon ? 'success' : 'error');
-      this.game.gameOver = true;
-    } else if (!result.success) {
-      this.showMessage(result.message, 'error');
-      this.game.gameOver = true;
-    } else {
-      this.showMessage(result.message, 'info');
-    }
-
-    this.render();
-  }
 
   resetGame() {
     this.game.reset();
@@ -225,6 +220,7 @@ export class UIManager {
     this.renderRadio();
     this.renderSpeedTableDynamic();
     this.highlightCurrentPlayer();
+    this.updateRoundButtonState();
   }
 
   renderStatus() {
@@ -550,15 +546,31 @@ export class UIManager {
       marker.classList.remove('active');
     });
 
-    // Calculate which marker should be active
-    const orientation = this.game.planeOrientation;
+    // Calculate which marker should be active using potential orientation
+    const orientation = this.game.getPotentialOrientation();
     const markers = document.querySelectorAll('.orientation-marker');
     
-    // Center is index 3 (0-indexed)
+    // Center is index 3 (0-indexed). Range -3 to 3 maps to 0 to 6.
     const activeIndex = 3 + orientation;
     if (markers[activeIndex]) {
       markers[activeIndex].classList.add('active');
     }
+  }
+
+  updateRoundButtonState() {
+    const btn = document.getElementById('new-round-btn');
+    if (!btn) return;
+    
+    if (this.game.gameOver) {
+      btn.disabled = true;
+      return;
+    }
+
+    const pilotUnused = this.game.pilotDice.some(d => !d.used);
+    const copilotUnused = this.game.copilotDice.some(d => !d.used);
+    
+    // Disable if any dice are unused
+    btn.disabled = pilotUnused || copilotUnused;
   }
 
   handleDrop(e) {
@@ -928,6 +940,7 @@ export class UIManager {
     const pilotSection = document.querySelector('.player-section.pilot');
     const copilotSection = document.querySelector('.player-section.copilot');
     const turnLabels = document.querySelectorAll('.status-item:nth-child(2) .label');
+    const currentPlayerValue = document.getElementById('current-player');
     
     if (!pilotSection || !copilotSection) return;
     
@@ -941,6 +954,11 @@ export class UIManager {
       turnLabels.forEach(label => {
         label.style.color = 'var(--accent-blue)';
       });
+      // Update status indicator
+      if (currentPlayerValue) {
+        currentPlayerValue.textContent = 'Piloto';
+        currentPlayerValue.className = 'value pilot-active';
+      }
     } else {
       copilotSection.classList.add('active-turn');
       pilotSection.classList.remove('active-turn');
@@ -951,6 +969,11 @@ export class UIManager {
       turnLabels.forEach(label => {
         label.style.color = 'var(--accent-orange)';
       });
+      // Update status indicator
+      if (currentPlayerValue) {
+        currentPlayerValue.textContent = 'Copiloto';
+        currentPlayerValue.className = 'value copilot-active';
+      }
     }
   }
 

@@ -45,6 +45,13 @@ export class GameState {
     this.radioCleared = [false, false, false];
   }
 
+  getPotentialOrientation() {
+    if (this.axisPilot !== null && this.axisCopilot !== null) {
+      return this.planeOrientation + (this.axisPilot - this.axisCopilot);
+    }
+    return this.planeOrientation;
+  }
+
   rollDice() {
     this.pilotDice = Array(4).fill(0).map(() => ({
       value: Math.floor(Math.random() * 6) + 1,
