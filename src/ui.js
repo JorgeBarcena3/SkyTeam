@@ -439,40 +439,37 @@ export class UIManager {
     // Render shared coffee
     const sharedCoffee = document.getElementById('shared-coffee');
     const coffeeCount = document.getElementById('coffee-count');
-    if (!sharedCoffee || !coffeeCount) return;
     
-    sharedCoffee.innerHTML = '';
-    
-    for (let i = 0; i < this.game.maxCoffee; i++) {
-        const token = document.createElement('div');
-        token.className = 'coffee-token';
-        if (i < this.game.coffeeTokens) {
-            token.textContent = '☕';
-            token.classList.add('active');
-        } else {
-            token.classList.add('empty');
-        }
-        sharedCoffee.appendChild(token);
+    if (sharedCoffee) {
+      sharedCoffee.innerHTML = '';
+      for (let i = 0; i < this.game.maxCoffee; i++) {
+          const token = document.createElement('div');
+          token.className = 'coffee-token';
+          if (i < this.game.coffeeTokens) {
+              token.textContent = '☕';
+              token.classList.add('active');
+          } else {
+              token.classList.add('empty');
+              token.textContent = '○'; // Visual placeholder
+          }
+          sharedCoffee.appendChild(token);
+      }
     }
     
-    coffeeCount.textContent = `${this.game.coffeeTokens}/${this.game.maxCoffee}`;
-
-    // Update drink coffee button state
-    const drinkBtn = document.getElementById('drink-coffee-btn');
-    const currentPlayerCanReroll = this.game.currentPlayer === 'pilot' ?
-      this.game.pilotCanReroll : this.game.copilotCanReroll;
-      
-    if (drinkBtn) {
-      drinkBtn.disabled = this.game.coffeeTokens <= 0 || currentPlayerCanReroll;
+    if (coffeeCount) {
+      coffeeCount.textContent = `${this.game.coffeeTokens}/${this.game.maxCoffee}`;
     }
     
-    // Update reroll slot state
+    // Update reroll slot state based on available coffee
     const rerollSlot = document.getElementById('reroll-slot');
     if (rerollSlot) {
-      if (currentPlayerCanReroll) {
+      const label = rerollSlot.querySelector('.slot-label');
+      if (this.game.coffeeTokens > 0) {
         rerollSlot.classList.remove('disabled');
+        if (label) label.textContent = 'Relanzar (1 Café)';
       } else {
         rerollSlot.classList.add('disabled');
+        if (label) label.textContent = 'Necesitas Café';
       }
     }
   }
@@ -583,6 +580,12 @@ export class UIManager {
     if (coffeeSlot) {
         this.handleMakeCoffeeDrop(e);
         return;
+    }
+
+    // Check if dropping on reroll slot - let handleRerollDrop handle it
+    const rerollSlot = e.target.closest('#reroll-slot');
+    if (rerollSlot) {
+        return; // setupRerollListener already handles this
     }
 
     const slot = e.target.closest('.dice-slot');
@@ -835,26 +838,16 @@ export class UIManager {
       return;
     }
 
-    const canReroll = player === 'pilot' ? this.game.pilotCanReroll : this.game.copilotCanReroll;
-    
-    if (!canReroll) {
-      this.showMessage('¡Debes tomar café primero para relanzar!', 'warning');
-      this.draggedDie = null;
-      return;
-    }
-
-    // Reroll this specific die
-    die.value = Math.floor(Math.random() * 6) + 1;
-    
-    // Consume reroll ability
-    if (player === 'pilot') {
-      this.game.pilotCanReroll = false;
+    // Check and consume coffee immediately
+    if (this.game.consumeCoffee()) {
+        // Reroll logic
+        die.value = Math.floor(Math.random() * 6) + 1;
+        this.showMessage(`¡Dado relanzado! Has usado 1 café. Nuevo valor: ${die.value}`, 'success');
+        this.render();
     } else {
-      this.game.copilotCanReroll = false;
+        this.showMessage('¡Necesitas tener al menos un café para relanzar!', 'warning');
     }
-
-    this.showMessage(`¡Dado relanzado! Nuevo valor: ${die.value}`, 'success');
-    this.render();
+    
     this.draggedDie = null;
   }
 
@@ -978,35 +971,54 @@ export class UIManager {
   }
 
   renderSpeedTableDynamic() {
+    // Calculate values safely
     const engineSum = (this.game.enginesPilot || 0) + (this.game.enginesCopilot || 0);
-    const landingGearSteps = this.game.landingGear.length; // 0, 1, 2, or 3
-    const flapsSteps = this.game.flaps.length; // 0, 1, 2, or 3
+    const landingGearSteps = this.game.landingGear ? this.game.landingGear.length : 0;
+    const flapsSteps = this.game.flaps ? this.game.flaps.length : 0;
     
-    // MIN starts between 3-4 (order 30-40), moves +10 right for each landing gear step
-    // Position 35 = between 3 and 4, then 45, 55, 65 (max)
+    // MIN starts between 3-4 (order 35), moves +10 per step
+    // 0 steps: 35 (Order 30 is '3', Order 40 is '4')
+    // 1 step: 45
+    // 2 steps: 55
+    // 3 steps: 65
     let minPosition = 35 + (landingGearSteps * 10);
     
-    // MAX starts between 9-10 (order 90-100), moves +10 right for each flaps step  
-    // Position 95 = between 9 and 10, then 105, 115, 125 (max)
+    // MAX starts between 9-10 (order 95), moves +10 per step
+    // 0 steps: 95 (Order 90 is '9', Order 100 is '10')
+    // 1 step: 105
+    // 2 steps: 115
+    // 3 steps: 125
     let maxPosition = 95 + (flapsSteps * 10);
     
-    // Update indicators position using CSS order
+    // Update indicators position using direct style attribute to ensure override
     const minIndicator = document.getElementById('min-indicator');
     const maxIndicator = document.getElementById('max-indicator');
     
     if (minIndicator) {
       minIndicator.style.order = minPosition;
+      minIndicator.querySelector('.indicator-label').textContent = 'MIN';
     }
     if (maxIndicator) {
       maxIndicator.style.order = maxPosition;
+      maxIndicator.querySelector('.indicator-label').textContent = 'MAX';
     }
     
     // Update current speed display
     const speedDisplay = document.getElementById('current-speed');
     if (speedDisplay) {
       if (engineSum > 0) {
-        speedDisplay.textContent = `Velocidad: ${engineSum}`;
-        speedDisplay.style.display = 'block';
+        // Find if we are within range
+        let status = 'OK';
+        // Map order positions roughly to values
+        // Value 1=10, 2=20, ... 12=120
+        const currentSpeedOrder = engineSum * 10;
+        
+        if (currentSpeedOrder < minPosition) status = '¡MUY LENTO!';
+        if (currentSpeedOrder > maxPosition) status = '¡MUY RÁPIDO!';
+        
+        const color = status === 'OK' ? 'var(--accent-green)' : 'var(--accent-red)';
+        
+        speedDisplay.innerHTML = `Velocidad: ${engineSum} <span style="color:${color}; margin-left:10px">${status}</span>`;
       } else {
         speedDisplay.textContent = 'Velocidad: --';
       }
@@ -1015,7 +1027,8 @@ export class UIManager {
     // Highlight current speed value
     document.querySelectorAll('.value-badge').forEach(badge => {
       const value = parseInt(badge.dataset.value || badge.textContent);
-      badge.classList.toggle('active', value === engineSum && engineSum > 0);
+      const isActive = value === engineSum && engineSum > 0;
+      badge.className = isActive ? 'value-badge active' : 'value-badge';
     });
   }
 

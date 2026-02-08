@@ -35,29 +35,26 @@
 
       <!-- Main Game Board -->
       <div class="cockpit-board">
-        <!-- Speed Table Dynamic -->
-        <div class="speed-table">
+        <!-- ROW 1 -->
+        <div class="player-section pilot section-pilot">
+          <h2>👨‍✈️ Piloto (Azul)</h2>
+          <div id="pilot-dice" class="dice-container"></div>
+        </div>
+
+        <div class="speed-table section-speed">
           <h3>📊 Tabla de Velocidad</h3>
           <div class="speed-grid-dynamic">
             <span class="value-badge" data-value="1" style="order: 10">1</span>
             <span class="value-badge" data-value="2" style="order: 20">2</span>
             <span class="value-badge" data-value="3" style="order: 30">3</span>
-            
-            <div class="speed-indicator" id="min-indicator" style="order: 35">
-              <span class="indicator-label">MIN</span>
-            </div>
-            
+            <div class="speed-indicator" id="min-indicator" style="order: 35"><span class="indicator-label">MIN</span></div>
             <span class="value-badge" data-value="4" style="order: 40">4</span>
             <span class="value-badge" data-value="5" style="order: 50">5</span>
             <span class="value-badge" data-value="6" style="order: 60">6</span>
             <span class="value-badge" data-value="7" style="order: 70">7</span>
             <span class="value-badge" data-value="8" style="order: 80">8</span>
             <span class="value-badge" data-value="9" style="order: 90">9</span>
-            
-            <div class="speed-indicator" id="max-indicator" style="order: 95">
-              <span class="indicator-label">MAX</span>
-            </div>
-            
+            <div class="speed-indicator" id="max-indicator" style="order: 95"><span class="indicator-label">MAX</span></div>
             <span class="value-badge" data-value="10" style="order: 100">10</span>
             <span class="value-badge" data-value="11" style="order: 110">11</span>
             <span class="value-badge" data-value="12" style="order: 120">12</span>
@@ -65,8 +62,13 @@
           <div id="current-speed" class="current-speed-display">Velocidad: --</div>
         </div>
 
-        <!-- Plane Orientation Indicator -->
-        <div class="plane-orientation">
+        <div class="player-section copilot section-copilot">
+          <h2>👨‍✈️ Copiloto (Naranja)</h2>
+          <div id="copilot-dice" class="dice-container"></div>
+        </div>
+
+        <!-- ROW 2 -->
+        <div class="plane-orientation section-orient">
           <div class="orientation-label">Orientación del Avión</div>
           <div class="orientation-display">
             <div class="orientation-marker left">L3</div>
@@ -79,149 +81,94 @@
           </div>
         </div>
 
-        <!-- Control Panel -->
-        <div class="control-panel">
-          <!-- Axis Control (Mandatory) -->
-          <div class="control-section mandatory" data-player="shared">
-            <h3>⚖️ Eje (Nivelación)</h3>
-            <div class="control-slots">
-              <div class="dice-slot pilot-slot" data-control="axis" data-player="pilot">
-                <span class="slot-label">Piloto</span>
-              </div>
-              <div class="dice-slot copilot-slot" data-control="axis" data-player="copilot">
-                <span class="slot-label">Copiloto</span>
-              </div>
-            </div>
-            <p class="control-hint">Obligatorio: Ambos jugadores deben colocar dados aquí</p>
-          </div>
-
-          <!-- Engines Control (Mandatory) -->
-          <div class="control-section mandatory" data-player="shared">
-            <h3>🚀 Motores (Velocidad)</h3>
-            <div class="control-slots">
-              <div class="dice-slot pilot-slot" data-control="engines" data-player="pilot">
-                <span class="slot-label">Piloto</span>
-              </div>
-              <div class="dice-slot copilot-slot" data-control="engines" data-player="copilot">
-                <span class="slot-label">Copiloto</span>
-              </div>
-            </div>
-            <p class="control-hint">Obligatorio: Controla la velocidad de aproximación</p>
-          </div>
-
-          <!-- Landing Gear (Pilot) -->
-          <div class="control-section" data-player="pilot">
-            <h3>🛞 Tren de Aterrizaje</h3>
-            <div class="deployment-track" id="landing-gear-track">
-              <div class="deployment-slot" data-required="1-2">1-2</div>
-              <div class="deployment-slot" data-required="3-4">3-4</div>
-              <div class="deployment-slot" data-required="5-6">5-6</div>
-            </div>
-            <p class="control-hint">Solo Piloto: Despliega con 3 dados</p>
-          </div>
-
-          <!-- Flaps (Co-Pilot) -->
-          <div class="control-section" data-player="copilot">
-            <h3>🪂 Flaps <button class="help-btn" data-help="flaps">?</button></h3>
-            <div class="deployment-track" id="flaps-track">
-              <div class="deployment-slot" data-required="1-2">1-2</div>
-              <div class="deployment-slot" data-required="3-4">3-4</div>
-              <div class="deployment-slot" data-required="5-6">5-6</div>
-            </div>
-            <p class="control-hint">Solo Copiloto: Despliega con 3 dados</p>
-          </div>
-
-          <!-- Coffee/Concentration (Shared Pool) -->
-          <div class="control-section coffee-section">
-            <h3>☕ Concentración (Cafés Compartidos)</h3>
-            <div class="coffee-display-shared">
-              <div class="coffee-pool">
-                <span class="coffee-label">Cafés Disponibles:</span>
-                <div id="shared-coffee" class="coffee-icons-shared"></div>
-                <span id="coffee-count" class="coffee-counter">0/3</span>
-              </div>
-            </div>
-            <div class="coffee-actions">
-              <div class="coffee-maker-container">
-                <div class="dice-slot coffee-slot" id="make-coffee-slot">
-                  <span class="slot-label">Descartar Dado</span>
-                </div>
-                <span class="coffee-arrow">➡️</span>
-                <span class="coffee-cup">☕</span>
-              </div>
-              <div class="coffee-buttons">
-                <button id="drink-coffee-btn" class="btn btn-coffee">Tomar Café (Ganar Relanzar)</button>
-              </div>
-              <div class="reroll-container">
-                <div class="dice-slot reroll-slot" id="reroll-slot">
-                  <span class="slot-label">Arrastra Dado para Relanzar</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Radio/Air Traffic Control -->
-          <div class="control-section radio-section" data-player="shared">
-            <h3>📻 Radio <button class="help-btn" data-help="radio">?</button></h3>
-            <div class="radio-track" id="radio-track">
-              <div class="radio-slot" data-required="2">
-                <span class="plane-icon">✈️</span>
-                <span class="required-value">2</span>
-              </div>
-              <div class="radio-slot" data-required="4">
-                <span class="plane-icon">✈️</span>
-                <span class="required-value">4</span>
-              </div>
-              <div class="radio-slot" data-required="6">
-                <span class="plane-icon">✈️</span>
-                <span class="required-value">6</span>
-              </div>
-            </div>
-            <p class="control-hint">Despeja aviones colocando dados con valor exacto</p>
-          </div>
-
-          <!-- Discard Panel -->
-          <div class="control-section discard-section">
-            <h3>🗑️ Descartar Dado <button class="help-btn" data-help="discard">?</button></h3>
+        <div class="control-section discard-section section-discard">
+            <h3>🗑️ Descartar Dado</h3>
             <div class="discard-zone" id="discard-zone">
               <div class="discard-slot" id="discard-slot">
                 <span class="discard-icon">🗑️</span>
                 <span class="discard-text">Arrastra aquí</span>
               </div>
             </div>
-          </div>
+        </div>
 
-          <!-- Brakes (Pilot) -->
-          <div class="control-section" data-player="pilot">
-            <h3>🛑 Frenos</h3>
+        <!-- ROW 3 -->
+        <div class="control-section mandatory section-engines" data-player="shared" data-control="engines">
+            <h3>🚀 Motores</h3>
             <div class="control-slots">
-              <div class="dice-slot pilot-slot" data-control="brakes" data-player="pilot">
-                <span class="slot-label">Cualquier Valor</span>
+              <div class="dice-slot pilot-slot" data-control="engines" data-player="pilot"><span class="slot-label">Piloto</span></div>
+              <div class="dice-slot copilot-slot" data-control="engines" data-player="copilot"><span class="slot-label">Copiloto</span></div>
+            </div>
+        </div>
+
+        <div class="control-section mandatory section-axis" data-player="shared" data-control="axis">
+             <h3>⚖️ Eje</h3>
+             <div class="control-slots">
+               <div class="dice-slot pilot-slot" data-control="axis" data-player="pilot"><span class="slot-label">Piloto</span></div>
+               <div class="dice-slot copilot-slot" data-control="axis" data-player="copilot"><span class="slot-label">Copiloto</span></div>
+             </div>
+        </div>
+
+        <div class="control-section section-gear" data-player="pilot" data-control="landing-gear">
+            <h3>🛞 Tren</h3>
+            <div class="deployment-track" id="landing-gear-track">
+              <div class="deployment-slot" data-required="1-2">1-2</div>
+              <div class="deployment-slot" data-required="3-4">3-4</div>
+              <div class="deployment-slot" data-required="5-6">5-6</div>
+            </div>
+        </div>
+
+        <div class="control-section section-flaps" data-player="copilot" data-control="flaps">
+            <h3>🪂 Flaps</h3>
+            <div class="deployment-track" id="flaps-track">
+              <div class="deployment-slot" data-required="1-2">1-2</div>
+              <div class="deployment-slot" data-required="3-4">3-4</div>
+              <div class="deployment-slot" data-required="5-6">5-6</div>
+            </div>
+        </div>
+
+        <div class="control-section coffee-section section-coffee">
+            <h3>☕ Café</h3>
+            <div class="coffee-display-shared">
+              <div class="coffee-pool">
+                <div id="shared-coffee" class="coffee-icons-shared"></div>
+                <span id="coffee-count" class="coffee-counter">0/3</span>
               </div>
             </div>
-            <p class="control-hint">Solo Piloto: Usar después de aterrizar</p>
-          </div>
+            <div class="coffee-actions">
+              <div class="coffee-maker-container">
+                <div class="dice-slot coffee-slot" id="make-coffee-slot"><span class="slot-label">x</span></div>
+                <span class="coffee-arrow">➡️</span>
+                <span class="coffee-cup">☕</span>
+              </div>
+
+              <div class="reroll-container">
+                 <div class="dice-slot reroll-slot" id="reroll-slot"><span class="slot-label">Relanzar</span></div>
+              </div>
+            </div>
+        </div>
+
+        <!-- ROW 4 -->
+        <div class="control-section radio-section section-radio" data-player="shared">
+            <h3>📻 Radio</h3>
+            <div id="radio-display-container" class="radio-display-container">
+               <!-- JS renders here -->
+               <div id="radio-track" class="radio-track" style="display:none"></div>
+            </div>
+        </div>
+
+        <div class="control-section section-brakes" data-player="pilot" data-control="brakes">
+            <h3>🛑 Frenos</h3>
+            <div class="control-slots">
+              <div class="dice-slot pilot-slot" data-control="brakes" data-player="pilot"><span class="slot-label">Cualquier</span></div>
+            </div>
         </div>
       </div>
 
-      <!-- Player Areas -->
-      <div class="players-area">
-        <!-- Pilot -->
-        <div class="player-section pilot">
-          <h2>👨‍✈️ Piloto (Azul)</h2>
-          <div id="pilot-dice" class="dice-container"></div>
-        </div>
 
-        <!-- Co-Pilot -->
-        <div class="player-section copilot">
-          <h2>👨‍✈️ Copiloto (Naranja)</h2>
-          <div id="copilot-dice" class="dice-container"></div>
-        </div>
-      </div>
 
       <!-- Action Buttons -->
       <div class="action-buttons">
-        <button id="new-round-btn" class="btn btn-primary">Iniciar Nueva Ronda</button>
+        <button id="new-round-btn" class="btn btn-primary">Terminar Ronda</button>
         <button id="reset-game-btn" class="btn btn-secondary">Reiniciar Juego</button>
       </div>
 

@@ -47,7 +47,7 @@ export class GameState {
 
   getPotentialOrientation() {
     if (this.axisPilot !== null && this.axisCopilot !== null) {
-      return this.planeOrientation + (this.axisPilot - this.axisCopilot);
+      return this.planeOrientation + (this.axisCopilot - this.axisPilot);
     }
     return this.planeOrientation;
   }
@@ -65,6 +65,8 @@ export class GameState {
       id: `copilot-${Math.random()}`
     }));
   }
+
+
 
   placeDice(diceId, control, player) {
     const dice = player === 'pilot' ? this.pilotDice : this.copilotDice;
@@ -184,8 +186,8 @@ export class GameState {
       return { success: false, message: 'JUEGO TERMINADO: ¡Motores no configurados!', gameOver: true };
     }
 
-    // Calculate axis (plane orientation) - UPDATED PHYSICS
-    const axisDiff = this.axisPilot - this.axisCopilot;
+    // Calculate axis (plane orientation) - UPDATED PHYSICS (Reversed)
+    const axisDiff = this.axisCopilot - this.axisPilot;
     this.planeOrientation += axisDiff; // Magnitude based on difference
     
     // Check for excessive orientation

@@ -67,6 +67,82 @@ body {
   text-transform: uppercase;
 }
 
+/* Game Status Dashboard */
+.game-status {
+  grid-area: status;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-dark) 100%);
+  padding: 15px;
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  margin-bottom: 5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.game-status::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 20px;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  flex: 1;
+}
+
+.status-item:last-child {
+  border-right: none;
+}
+
+.status-item .label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  opacity: 0.8;
+}
+
+.status-item .value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+.status-item #round-number {
+  color: var(--accent-blue);
+  text-shadow: 0 0 20px var(--glow-blue);
+}
+
+.status-item #current-player.pilot-active {
+  color: var(--accent-blue);
+  text-shadow: 0 0 20px var(--glow-blue);
+}
+.status-item #current-player.copilot-active {
+  color: var(--accent-orange);
+  text-shadow: 0 0 20px var(--glow-orange);
+}
+
+.status-item #approach-distance {
+  color: var(--accent-green);
+  text-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+}
+
 /* Cursor Override - Force game cursor */
 a, button, .dice-slot, .deployment-slot, .radio-slot, .discard-slot, .help-btn, .coffee-token, .die, .die.pilot, .die.copilot, .btn, .control-btn {
   cursor: inherit !important;
@@ -75,31 +151,84 @@ a, button, .dice-slot, .deployment-slot, .radio-slot, .discard-slot, .help-btn, 
 /* Layout - Full Height */
 .game-container {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr auto;
   gap: 10px;
   height: 100vh;
   padding: 10px;
   box-sizing: border-box;
   overflow: hidden;
   grid-template-areas:
-    "status status status"
-    "pilot-area cockpit copilot-area"
-    "pilot-area actions copilot-area";
+    "status"
+    "cockpit"
+    "actions";
 }
 
+/* Main Cockpit Board - 12 Column Grid */
 .cockpit-board {
   grid-area: cockpit;
   background: var(--bg-cockpit);
-  padding: 10px;
+  padding: 15px;
   border-radius: 10px;
   border: 3px solid var(--border-color);
   box-shadow: 0 10px 35px rgba(0, 0, 0, 0.6);
   overflow-y: auto;
-  height: 100%; /* Force full height of grid area */
-  display: flex;
-  flex-direction: column;
+  
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 15px;
+  align-items: stretch; 
 }
+
+/* Reset Layouts */
+.player-section.pilot, .player-section.copilot {
+  float: none;
+  width: auto;
+  margin: 0;
+  height: 100%; /* Fill cell */
+}
+
+/* Row 1: Pilot | Speed | Copilot */
+.section-pilot { grid-column: span 3; }
+.section-speed { grid-column: span 6; } /* Wider center */
+.section-copilot { grid-column: span 3; }
+
+/* Row 2: Orientation | Discard */
+.section-orient { 
+    grid-column: span 8; 
+    margin-bottom: 0; /* Reset */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.section-discard { grid-column: span 4; }
+
+/* Row 3: Engines | Axis | Gear | Flaps | Coffee (5 items) */
+/* Distribute 12 cols: 2, 2, 3, 3, 2 */
+/* Align-self start prevents them from stretching to the tallest item's height */
+.section-engines { grid-column: span 2; align-self: start; }
+.section-axis { grid-column: span 2; align-self: start; }
+.section-gear { grid-column: span 3; align-self: start; }
+.section-flaps { grid-column: span 3; align-self: start; }
+.section-coffee { grid-column: span 2; align-self: start; }
+
+/* Row 4: Radio | Brakes */
+.section-radio { grid-column: span 8; }
+.section-brakes { grid-column: span 4; }
+
+/* General Section Styling */
+.control-section {
+    max-width: none; /* Remove limits */
+    margin: 0;
+    width: 100%;
+}
+
+/* Ensure Speed Table layout fits Grid */
+.speed-table {
+  /* It was flex column, keep it */
+  margin: 0;
+}
+
 
 /* Plane Orientation */
 .plane-orientation {
@@ -161,10 +290,16 @@ a, button, .dice-slot, .deployment-slot, .radio-slot, .discard-slot, .help-btn, 
 }
 
 /* Control Panel */
+/* Control Panel (Flow into available space) */
 .control-panel {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+  clear: both; /* Force it below the player panels if you want distinct separation, OR let it flow */
+  /* If we remove clear:both, it tries to squeeze up. But controls are wide. Safe to clear usually. */
+  clear: both;
 }
 
 .control-section {
@@ -173,6 +308,8 @@ a, button, .dice-slot, .deployment-slot, .radio-slot, .discard-slot, .help-btn, 
   border-radius: 10px;
   border: 2px solid var(--border-color);
   transition: all 0.3s ease;
+  flex: 1 1 300px; /* Adapts width */
+  max-width: 500px; /* Prevent overly wide stretched controls */
 }
 
 .control-section:hover {
@@ -359,17 +496,19 @@ a, button, .dice-slot, .deployment-slot, .radio-slot, .discard-slot, .help-btn, 
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  max-height: 100%;
+  align-self: start; /* Prevent stretching to full height */
 }
 
 .player-section.pilot {
-  grid-area: pilot-area;
+  /* grid-area removed */
   border-color: var(--accent-blue);
   box-shadow: 0 0 25px rgba(74, 158, 255, 0.1);
   background: linear-gradient(135deg, var(--bg-panel), rgba(74, 158, 255, 0.05));
 }
 
 .player-section.copilot {
-  grid-area: copilot-area;
+  /* grid-area removed */
   border-color: var(--accent-orange);
   box-shadow: 0 0 25px rgba(255, 140, 66, 0.1);
   background: linear-gradient(135deg, var(--bg-panel), rgba(255, 140, 66, 0.05));
@@ -1349,32 +1488,85 @@ body.copilot-turn {
   text-shadow: 0 0 10px var(--accent-green);
 }
 
-/* Speed Table (Zone Based) */
+/* Speed Table Integrated */
 .speed-table {
   background: linear-gradient(135deg, var(--bg-panel), var(--bg-dark));
   border: 2px solid var(--border-color);
   border-radius: 15px;
-  padding: 20px;
-  margin: 20px 0;
+  padding: 15px;
+  margin: 10px 0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex; /* Changed from default block to flex column */
+  flex-direction: column;
 }
 
 .speed-table h3 {
   font-family: 'Orbitron', sans-serif;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: var(--accent-blue);
-  margin: 0 0 20px 0;
+  margin: 0 0 15px 0;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 2px;
 }
 
-.speed-grid {
+.speed-content-row {
   display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
   justify-content: space-between;
-  align-items: stretch;
+}
+
+.speed-grid-container {
+  flex: 3; /* Takes more space */
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
+
+.speed-grid-dynamic {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center the numbers */
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Compact Engines Section within Speed Table */
+.compact-engines {
+  flex: 1;
+  min-width: 180px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px dashed var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.compact-title {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--accent-blue);
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.control-slots.horizontal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.plus-sign {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    font-weight: bold;
+}
+
 
 .speed-zone {
   flex: 1;
@@ -1571,4 +1763,105 @@ body.copilot-turn {
 
 @keyframes scaleIn {
   to { transform: scale(1); }
+}
+/* Radio Re-implementation Styles */
+.radio-display-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.radar-screen {
+  background: var(--bg-dark);
+  border: 2px solid #228b22;
+  border-radius: 8px;
+  padding: 10px;
+  position: relative;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: linear-gradient(90deg, #001100 0%, #003300 100%);
+}
+
+.radar-grid-line {
+    position: absolute;
+    width: 1px;
+    height: 100%;
+    background: rgba(50, 205, 50, 0.2);
+}
+
+.radar-plane-blip {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    background: radial-gradient(circle, #ff4444 0%, #880000 100%);
+    border: 1px solid #ff0000;
+    border-radius: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+    animation: blip 2s infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    z-index: 10;
+}
+
+@keyframes blip {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.9); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.radar-me-blip {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: #4a9eff;
+    border: 2px solid white;
+    border-radius: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px #4a9eff;
+    z-index: 20;
+}
+
+.radio-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.radio-slot-compact {
+    width: 60px;
+    height: 70px;
+    background: var(--bg-dark);
+    border: 2px dashed #228b22;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: #32cd32;
+    transition: all 0.3s ease;
+}
+
+.radio-slot-compact:hover {
+    background: rgba(50, 205, 50, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(50, 205, 50, 0.3);
+}
+
+.radio-slot-compact.cleared {
+    border-style: solid;
+    background: rgba(50, 205, 50, 0.2);
+    opacity: 0.5;
+    text-decoration: line-through;
 }
